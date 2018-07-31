@@ -7,3 +7,4 @@ Webotron currently has the following features:
 - List buckets
 - List contents of a bucket
 - Create and setup bucket
+- Save directory tree to a bucket
