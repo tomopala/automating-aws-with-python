@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-"""Webotron: Deply websites with AWS.
+"""Webotron: Deply websites with AWS
 
 - Configure AWS S3 buckets
     - Create then
@@ -32,7 +32,7 @@ def cli():
 
 @cli.command('list-buckets')
 def list_buckets():
-    """List all s3 buckets."""
+    """List all s3 buckets"""
     for bucket in s3.buckets.all():
         print(bucket)
 
@@ -40,7 +40,7 @@ def list_buckets():
 @cli.command('list-bucket-objects')
 @click.argument('bucket')
 def list_bucket_objects(bucket):
-    """List objects in an S3 bucket."""
+    """List objects in an S3 bucket"""
     for obj in s3.Bucket(bucket).objects.all():
         print(obj)
 
@@ -48,7 +48,7 @@ def list_bucket_objects(bucket):
 @cli.command('setup-bucket')
 @click.argument('bucket')
 def setup_bucket(bucket):
-    """Create and cofigure S3 bucket."""
+    """Create and cofigure S3 bucket"""
     s3_bucket = None
     try:
         s3_bucket = s3.create_bucket(
@@ -57,11 +57,11 @@ def setup_bucket(bucket):
                 'LocationConstraint': session.region_name
                 }
         )
-    except ClientError as error:
-        if error.response['Error']['Code'] == 'BucketAlreadyOwnedByYou':
+    except ClientError as e:
+        if e.response['Error']['Code'] == 'BucketAlreadyOwnedByYou':
             s3_bucket = s3.Bucket(bucket)
         else:
-            raise error
+            raise e
 
     policy = """
     {
@@ -95,14 +95,12 @@ def setup_bucket(bucket):
 
 
 def upload_file(s3_bucket, path, key):
-    """Upload path to s3_bucket."""
-    content_type = mimetypes.guess_type(key)[0] or 'text/plain'
-
+    conent_type = mimetypes.guess_type(key)[0] or 'text/plain'
     s3_bucket.upload_file(
         path,
         key,
         ExtraArgs={
-            'ContentType': content_type
+            'ContentType': 'txt/html'
         })
 
 
@@ -110,16 +108,16 @@ def upload_file(s3_bucket, path, key):
 @click.argument('pathname', type=click.Path(exists=True))
 @click.argument('bucket')
 def sync(pathname, bucket):
-    """Sync contents of PATHNAME into BUCKET."""
+    """Sync contents of PATHNAME into BUCKET"""
     s3_bucket = s3.Bucket(bucket)
     root = Path(pathname).expanduser().resolve()
 
     def handle_directory(target):
-        for path in target.iterdir():
-            if path.is_dir():
-                handle_directory(path)
-            if path.is_file():
-                upload_file(s3_bucket, str(path), str(path.relative_to(root)))
+        for p in target.iterdir():
+            if p.is_dir():
+                handle_directory(p)
+            if p.is_file():
+                upload_file(s3_bucket, str(p), str(p.relative_to(root)))
     handle_directory(root)
 
 
